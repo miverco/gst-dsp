@@ -39,10 +39,12 @@ enum {
     ARG_0,
     ARG_BITRATE,
     ARG_MODE,
+    ARG_KEYFRAME_INTERVAL,
 };
 
 #define DEFAULT_BITRATE 0
 #define DEFAULT_MODE 0
+#define DEFAULT_KEYFRAME_INTERVAL 1
 
 #define GST_TYPE_DSPVENC_MODE gst_dspvenc_mode_get_type()
 static GType
@@ -717,7 +719,7 @@ setup_h264params_in(GstDspBase *base)
 	in_param->ref_framerate = self->framerate * 1000;
 	in_param->target_framerate = self->framerate * 1000;
 	in_param->target_bitrate = self->bitrate;
-	in_param->intra_frame_interval = self->framerate;
+	in_param->intra_frame_interval = self->keyframe_interval * self->framerate;
 	in_param->generate_header = 0;
 	in_param->capture_width = 0;
 	in_param->force_i_frame = 0;
@@ -887,7 +889,7 @@ setup_mp4param_in(GstDspBase *base)
 	in_param->frame_index = 0;
 	in_param->framerate = self->framerate;
 	in_param->bitrate = self->bitrate;
-	in_param->i_frame_interval = self->framerate;
+	in_param->i_frame_interval = self->keyframe_interval * self->framerate;
 	in_param->generate_header = 0;
 	in_param->force_i_frame = 0;
 	in_param->air_rate = 10;
@@ -1198,6 +1200,9 @@ set_property(GObject *obj,
 	case ARG_MODE:
 		g_atomic_int_set(&self->mode, g_value_get_enum(value));
 		break;
+	case ARG_KEYFRAME_INTERVAL:
+		g_atomic_int_set(&self->keyframe_interval, g_value_get_int(value));
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, prop_id, pspec);
 		break;
@@ -1220,6 +1225,9 @@ get_property(GObject *obj,
 		break;
 	case ARG_MODE:
 		g_value_set_enum(value, g_atomic_int_get(&self->mode));
+		break;
+	case ARG_KEYFRAME_INTERVAL:
+		g_value_set_int(value, g_atomic_int_get(&self->keyframe_interval));
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID(obj, prop_id, pspec);
@@ -1244,6 +1252,7 @@ instance_init(GTypeInstance *instance,
 
 	self->bitrate = DEFAULT_BITRATE;
 	self->mode = DEFAULT_MODE;
+	self->keyframe_interval = DEFAULT_KEYFRAME_INTERVAL;
 
 	self->keyframe_mutex = g_mutex_new();
 }
@@ -1299,6 +1308,10 @@ class_init(gpointer g_class,
 							  GST_TYPE_DSPVENC_MODE,
 							  DEFAULT_MODE,
 							  G_PARAM_READWRITE));
+	g_object_class_install_property(gobject_class, ARG_KEYFRAME_INTERVAL,
+					g_param_spec_int("keyframe-interval", "Keyframe interval",
+							 "Generate keyframes at every specified intervals (seconds)",
+							 0, G_MAXINT, DEFAULT_KEYFRAME_INTERVAL, G_PARAM_READWRITE));
 
 	gobject_class->finalize = finalize;
 
