@@ -230,11 +230,11 @@ struct wait_for_events {
 	unsigned int timeout;
 };
 
-bool dsp_wait_for_events(int handle,
-			 struct dsp_notification **notifications,
-			 unsigned int count,
-			 unsigned int *ret_index,
-			 unsigned int timeout)
+int dsp_wait_for_events(int handle,
+			struct dsp_notification **notifications,
+			unsigned int count,
+			unsigned int *ret_index,
+			unsigned int timeout)
 {
 	struct wait_for_events arg = {
 		.notifications = notifications,
@@ -243,7 +243,7 @@ bool dsp_wait_for_events(int handle,
 		.timeout = timeout,
 	};
 
-	return DSP_SUCCEEDED(ioctl(handle, MGR_WAIT, &arg));
+	return ioctl(handle, MGR_WAIT, &arg);
 }
 
 struct enum_node {

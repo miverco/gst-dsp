@@ -284,11 +284,11 @@ bool dsp_node_register_notify(int handle,
 			      unsigned int notify_type,
 			      struct dsp_notification *info);
 
-bool dsp_wait_for_events(int handle,
-			 struct dsp_notification **notifications,
-			 unsigned int count,
-			 unsigned int *ret_index,
-			 unsigned int timeout);
+int dsp_wait_for_events(int handle,
+			struct dsp_notification **notifications,
+			unsigned int count,
+			unsigned int *ret_index,
+			unsigned int timeout);
 
 bool dsp_enum(int handle,
 	      unsigned int num,
