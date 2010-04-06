@@ -180,6 +180,43 @@ get_mp4v_args(GstDspVDec *self)
 	return cb_data;
 }
 
+struct mp4vdec_in_params {
+	uint32_t frame_index;
+	int32_t buf_count;
+	uint32_t ring_io_block_size;
+	int32_t performance_mode;
+};
+
+static void
+mp4vdec_in_send_cb(GstDspBase *base,
+		  du_port_t *port,
+		  dmm_buffer_t *p,
+		  dmm_buffer_t *b)
+{
+	GstDspVDec *self = GST_DSP_VDEC(base);
+	struct mp4vdec_in_params *param;
+	param = p->data;
+
+	param->frame_index = g_atomic_int_exchange_and_add(&self->frame_index, 1);
+	param->performance_mode = 2;
+	dmm_buffer_clean(p, sizeof(*param));
+}
+
+static inline void
+setup_mp4vdec_params(GstDspBase *base)
+{
+	struct mp4vdec_in_params *in_param;
+	guint i;
+
+	for (i = 0; i < base->ports[0]->num_buffers; i++) {
+		dmm_buffer_t *tmp;
+		tmp = dmm_buffer_new(base->dsp_handle, base->proc);
+		dmm_buffer_allocate(tmp, sizeof(*in_param));
+		base->ports[0]->params[i] = tmp;
+	}
+	base->ports[0]->send_cb = mp4vdec_in_send_cb;
+}
+
 struct h264vdec_args {
 	uint16_t num_streams;
 
@@ -904,6 +941,9 @@ create_node(GstDspBase *base)
 		break;
 	case GSTDSP_H264DEC:
 		setup_h264params(base);
+		break;
+	case GSTDSP_MPEG4VDEC:
+		setup_mp4vdec_params(base);
 		break;
 	default:
 		break;
